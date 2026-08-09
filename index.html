@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
@@ -24,7 +24,7 @@
     <!-- 로그인 영역 -->
     <div id="login-section">
         <input type="email" id="email" placeholder="관리자 이메일">
-        <input type="password" id="password" placeholder="비밀번호">
+        <input type="password" id="password" placeholder="비밀번호 (6자리 이상)">
         <button id="login-btn">🔑 관리자 로그인</button>
         <button id="logout-btn" style="display:none; background:#7f8c8d;">로그아웃</button>
     </div>
@@ -46,7 +46,6 @@
         import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
         import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
 
-        // 보내주신 파이어베이스 설정값 적용 완료
         const firebaseConfig = {
             apiKey: "AIzaSyBqXBVuNWLNWD0fLbLQLSaimanJgXbKm8",
             authDomain: "food-8561a.firebaseapp.com",
@@ -63,8 +62,14 @@
 
         // 로그인 버튼 동작
         document.getElementById('login-btn').addEventListener('click', () => {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+            
+            if(!email || !password) {
+                alert("이메일과 비밀번호를 모두 입력해주세요!");
+                return;
+            }
+
             signInWithEmailAndPassword(auth, email, password)
                 .then(() => alert("관리자 로그인 성공!"))
                 .catch(e => alert("로그인 실패: " + e.message));
@@ -90,7 +95,7 @@
                 document.getElementById('email').style.display = 'none';
                 document.getElementById('password').style.display = 'none';
                 document.getElementById('login-btn').style.display = 'none';
-                loadMenus(true); // 관리자 권한으로 목록 로드 (삭제 버튼 표시)
+                loadMenus(true);
             } else {
                 loadMenus(false);
             }
@@ -98,7 +103,7 @@
 
         // 메뉴 등록 버튼 동작
         document.getElementById('add-menu-btn').addEventListener('click', async () => {
-            const name = document.getElementById('menu-name').value;
+            const name = document.getElementById('menu-name').value.trim();
             if (!name) {
                 alert("메뉴 이름을 입력하세요!");
                 return;
@@ -113,7 +118,7 @@
             }
         });
 
-        // 메뉴 삭제 함수 (전역 등록)
+        // 메뉴 삭제 함수
         window.deleteMenu = async function(id) {
             if (confirm("정말 이 메뉴를 삭제하시겠습니까?")) {
                 try {
@@ -151,7 +156,6 @@
             }
         }
 
-        // 초기 일반 방문자용 목록 로드
         loadMenus(false);
     </script>
 </body>
