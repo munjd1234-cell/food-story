@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Story - 메뉴 아카이브</title>
+    <style>
+        body { font-family: 'Arial', sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; background: #f9f9f9; color: #333; }
+        h1 { text-align: center; color: #2c3e50; }
+        #login-section { background: #fff; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; gap: 10px; justify-content: center; align-items: center; }
+        #admin-panel { background: #eef2f7; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .menu-item { background: #fff; border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; }
+        input, button { padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; }
+        button { background: #3498db; color: white; border: none; cursor: pointer; }
+        button:hover { background: #2980b9; }
+        .delete-btn { background: #e74c3c; }
+        .delete-btn:hover { background: #c0392b; }
+    </style>
+</head>
+<body>
+
+    <h1>Food Story 메뉴 아카이브</h1>
+    
+    <!-- 로그인 영역 -->
+    <div id="login-section">
+        <input type="email" id="email" placeholder="관리자 이메일">
+        <input type="password" id="password" placeholder="비밀번호">
+        <button id="login-btn">🔑 관리자 로그인</button>
+        <button id="logout-btn" style="display:none; background:#7f8c8d;">로그아웃</button>
+    </div>
+
+    <!-- 관리자 전용 메뉴 등록 패널 -->
+    <div id="admin-panel">
+        <h3>관리자 모드: 새 메뉴 등록</h3>
+        <div style="display: flex; gap: 10px;">
+            <input type="text" id="menu-name" placeholder="메뉴 이름 입력" style="flex: 1;">
+            <button id="add-menu-btn">메뉴 등록</button>
+        </div>
+    </div>
+
+    <!-- 메뉴 목록 출력 영역 -->
+    <div id="menu-list">메뉴를 불러오는 중...</div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+
+        // 보내주신 파이어베이스 설정값 적용 완료
+        const firebaseConfig = {
+            apiKey: "AIzaSyBqXBVuNWLNWD0fLbLQLSaimanJgXbKm8",
+            authDomain: "food-8561a.firebaseapp.com",
+            projectId: "food-8561a",
+            storageBucket: "food-8561a.firebasestorage.app",
+            messagingSenderId: "630088668959",
+            appId: "1:630088668959:web:a536cfbf162d432591022a",
+            measurementId: "G-HEY6X2BENV"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // 로그인 버튼 동작
+        document.getElementById('login-btn').addEventListener('click', () => {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            signInWithEmailAndPassword(auth, email, password)
+                .then(() => alert("관리자 로그인 성공!"))
+                .catch(e => alert("로그인 실패: " + e.message));
+        });
+
+        // 로그아웃 버튼 동작
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            signOut(auth).then(() => {
+                alert("로그아웃 되었습니다.");
+                location.reload();
+            });
+        });
+
+        // 관리자 권한 상태 감지
+        onAuthStateChanged(auth, (user) => {
+            const adminPanel = document.getElementById('admin-panel');
+            const logoutBtn = document.getElementById('logout-btn');
+            const loginSection = document.getElementById('login-section');
+
+            if (user && user.email === 'munjd1234@gmail.com') {
+                adminPanel.style.display = 'block';
+                logoutBtn.style.display = 'inline-block';
+                document.getElementById('email').style.display = 'none';
+                document.getElementById('password').style.display = 'none';
+                document.getElementById('login-btn').style.display = 'none';
+                loadMenus(true); // 관리자 권한으로 목록 로드 (삭제 버튼 표시)
+            } else {
+                loadMenus(false);
+            }
+        });
+
+        // 메뉴 등록 버튼 동작
+        document.getElementById('add-menu-btn').addEventListener('click', async () => {
+            const name = document.getElementById('menu-name').value;
+            if (!name) {
+                alert("메뉴 이름을 입력하세요!");
+                return;
+            }
+            try {
+                await addDoc(collection(db, "menus"), { name: name, createdAt: new Date() });
+                alert("메뉴가 등록되었습니다!");
+                document.getElementById('menu-name').value = "";
+                loadMenus(true);
+            } catch (e) {
+                alert("등록 실패: " + e.message);
+            }
+        });
+
+        // 메뉴 삭제 함수 (전역 등록)
+        window.deleteMenu = async function(id) {
+            if (confirm("정말 이 메뉴를 삭제하시겠습니까?")) {
+                try {
+                    await deleteDoc(doc(db, "menus", id));
+                    alert("삭제되었습니다.");
+                    loadMenus(true);
+                } catch (e) {
+                    alert("삭제 실패: " + e.message);
+                }
+            }
+        }
+
+        // 메뉴 불러오기 함수
+        async function loadMenus(isAdmin) {
+            const list = document.getElementById('menu-list');
+            try {
+                const querySnapshot = await getDocs(collection(db, "menus"));
+                list.innerHTML = "";
+                if (querySnapshot.empty) {
+                    list.innerHTML = "<p style='text-align:center; color:#7f8c8d;'>등록된 메뉴가 없습니다.</p>";
+                    return;
+                }
+                querySnapshot.forEach((documentItem) => {
+                    const data = documentItem.data();
+                    let deleteButtonHtml = isAdmin ? `<button class="delete-btn" onclick="deleteMenu('${documentItem.id}')">삭제</button>` : '';
+                    list.innerHTML += `
+                        <div class="menu-item">
+                            <span>${data.name}</span>
+                            ${deleteButtonHtml}
+                        </div>
+                    `;
+                });
+            } catch (e) {
+                list.innerHTML = "메뉴를 불러오는 중 오류가 발생했습니다.";
+            }
+        }
+
+        // 초기 일반 방문자용 목록 로드
+        loadMenus(false);
+    </script>
+</body>
+</html>
