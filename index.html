@@ -15,14 +15,12 @@
             <h1 class="font-black text-blue-600 text-lg cursor-pointer" onclick="switchView('user')">
                 <i class="fa-solid fa-store mr-2"></i>Brand Archive
             </h1>
-            <div id="nav-auth-area" class="flex items-center gap-3 text-sm">
-                <!-- 로그인 상태에 따라 버튼 변경 -->
-            </div>
+            <div id="nav-auth-area" class="flex items-center gap-3 text-sm"></div>
         </div>
     </header>
 
     <main class="max-w-5xl mx-auto px-4 py-6">
-        <!-- 관리자 전용 탭 (로그인 시에만 노출) -->
+        <!-- 관리자 전용 탭 -->
         <div id="view-tabs" class="hidden flex gap-2 mb-6 bg-white p-2 rounded-xl shadow-sm border">
             <button onclick="switchView('user')" class="flex-1 py-2 rounded-lg font-bold hover:bg-blue-50 text-gray-700">고객 화면</button>
             <button onclick="switchView('admin-brand')" class="flex-1 py-2 rounded-lg font-bold hover:bg-blue-50 text-gray-700">브랜드 관리</button>
@@ -43,12 +41,16 @@
         <!-- [화면 2] 브랜드 관리 -->
         <div id="view-admin-brand" class="hidden space-y-6">
             <div class="bg-white p-6 rounded-xl shadow-sm border">
-                <h2 class="font-bold mb-4 text-blue-600"><i class="fa-solid fa-plus-circle mr-1"></i> 새 브랜드 등록</h2>
+                <h2 id="brand-form-title" class="font-bold mb-4 text-blue-600"><i class="fa-solid fa-plus-circle mr-1"></i> 새 브랜드 등록</h2>
+                <input type="hidden" id="editing-brand-id">
                 <div class="grid grid-cols-1 gap-3">
                     <input type="text" id="b-name" placeholder="브랜드명" class="border p-2.5 rounded-lg text-sm">
                     <input type="text" id="b-ci" placeholder="CI 이미지 URL" class="border p-2.5 rounded-lg text-sm">
                     <input type="number" id="b-order" placeholder="노출 순서 (숫자)" class="border p-2.5 rounded-lg text-sm">
-                    <button onclick="saveBrand()" class="bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg font-bold text-sm">브랜드 등록하기</button>
+                    <div class="flex gap-2">
+                        <button id="brand-submit-btn" onclick="saveBrand()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg font-bold text-sm">브랜드 등록하기</button>
+                        <button id="brand-cancel-btn" onclick="resetBrandForm()" class="hidden bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2.5 rounded-lg font-bold text-sm">취소</button>
+                    </div>
                 </div>
             </div>
             <div id="admin-brand-list" class="space-y-2"></div>
@@ -57,7 +59,8 @@
         <!-- [화면 3] 메뉴 관리 -->
         <div id="view-admin-menu" class="hidden space-y-6">
             <div class="bg-white p-6 rounded-xl shadow-sm border">
-                <h2 class="font-bold mb-4 text-green-600"><i class="fa-solid fa-plus-circle mr-1"></i> 새 메뉴 등록</h2>
+                <h2 id="menu-form-title" class="font-bold mb-4 text-green-600"><i class="fa-solid fa-plus-circle mr-1"></i> 새 메뉴 등록</h2>
+                <input type="hidden" id="editing-menu-id">
                 <input type="text" id="m-name" placeholder="메뉴명" class="w-full border p-2.5 rounded-lg text-sm mb-3">
                 <input type="number" id="m-order" placeholder="노출 순서 (숫자)" class="w-full border p-2.5 rounded-lg text-sm mb-3">
                 <div class="mb-3">
@@ -65,7 +68,10 @@
                     <div id="brand-checkboxes" class="flex flex-wrap gap-2 py-1 text-sm"></div>
                 </div>
                 <textarea id="m-recipe" placeholder="레시피 상세 내용" class="w-full border p-2.5 rounded-lg text-sm h-28 mb-3"></textarea>
-                <button onclick="saveMenu()" class="w-full bg-green-600 hover:bg-green-700 text-white py-2.5 rounded-lg font-bold text-sm">메뉴 등록하기</button>
+                <div class="flex gap-2">
+                    <button id="menu-submit-btn" onclick="saveMenu()" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2.5 rounded-lg font-bold text-sm">메뉴 등록하기</button>
+                    <button id="menu-cancel-btn" onclick="resetMenuForm()" class="hidden bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2.5 rounded-lg font-bold text-sm">취소</button>
+                </div>
             </div>
             <div id="admin-menu-list" class="space-y-2"></div>
         </div>
@@ -88,7 +94,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         const firebaseConfig = {
@@ -128,19 +134,19 @@
                 </button>
             `).join('') : '<p class="text-xs text-gray-400">등록된 브랜드가 없습니다.</p>';
 
-            // 관리자 브랜드 관리 목록
+            // 관리자 브랜드 관리 목록 (항목 클릭 시 수정 모드 진입)
             document.getElementById('admin-brand-list').innerHTML = brands.map(b => `
-                <div class="bg-white p-3 flex justify-between items-center rounded-lg shadow-sm border text-sm">
+                <div class="bg-white p-3 flex justify-between items-center rounded-lg shadow-sm border text-sm hover:bg-blue-50 transition cursor-pointer" onclick="selectBrandForEdit('${b.id}')">
                     <span><b>[순서 ${b.order}]</b> ${b.name}</span>
-                    <button onclick="deleteItem('brands', '${b.id}')" class="text-red-500 hover:text-red-700 px-2 py-1"><i class="fa-solid fa-trash"></i> 삭제</button>
+                    <button onclick="event.stopPropagation(); deleteItem('brands', '${b.id}')" class="text-red-500 hover:text-red-700 px-2 py-1"><i class="fa-solid fa-trash"></i> 삭제</button>
                 </div>
             `).join('');
 
-            // 관리자 메뉴 관리 목록
+            // 관리자 메뉴 관리 목록 (항목 클릭 시 수정 모드 진입)
             document.getElementById('admin-menu-list').innerHTML = menus.map(m => `
-                <div class="bg-white p-3 flex justify-between items-center rounded-lg shadow-sm border text-sm">
+                <div class="bg-white p-3 flex justify-between items-center rounded-lg shadow-sm border text-sm hover:bg-green-50 transition cursor-pointer" onclick="selectMenuForEdit('${m.id}')">
                     <span><b>[순서 ${m.order}]</b> ${m.name}</span>
-                    <button onclick="deleteItem('menus', '${m.id}')" class="text-red-500 hover:text-red-700 px-2 py-1"><i class="fa-solid fa-trash"></i> 삭제</button>
+                    <button onclick="event.stopPropagation(); deleteItem('menus', '${m.id}')" class="text-red-500 hover:text-red-700 px-2 py-1"><i class="fa-solid fa-trash"></i> 삭제</button>
                 </div>
             `).join('');
 
@@ -169,37 +175,105 @@
             `).join('');
         };
 
-        window.saveBrand = async () => {
-            const name = document.getElementById('b-name').value.trim();
-            if(!name) { alert("브랜드명을 입력하세요."); return; }
-            await addDoc(collection(db, "brands"), {
-                name,
-                ci: document.getElementById('b-ci').value.trim(),
-                order: parseInt(document.getElementById('b-order').value) || 0
-            });
+        // 브랜드 수정 데이터 불러오기
+        window.selectBrandForEdit = (id) => {
+            const b = brands.find(item => item.id === id);
+            if(!b) return;
+            document.getElementById('editing-brand-id').value = b.id;
+            document.getElementById('b-name').value = b.name;
+            document.getElementById('b-ci').value = b.ci || '';
+            document.getElementById('b-order').value = b.order;
+            
+            document.getElementById('brand-form-title').innerHTML = `<i class="fa-solid fa-pen-to-square mr-1"></i> 브랜드 수정하기`;
+            document.getElementById('brand-submit-btn').innerText = `수정 완료`;
+            document.getElementById('brand-cancel-btn').classList.remove('hidden');
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        };
+
+        window.resetBrandForm = () => {
+            document.getElementById('editing-brand-id').value = '';
             document.getElementById('b-name').value = '';
             document.getElementById('b-ci').value = '';
             document.getElementById('b-order').value = '';
-            alert("브랜드가 등록되었습니다.");
+            document.getElementById('brand-form-title').innerHTML = `<i class="fa-solid fa-plus-circle mr-1"></i> 새 브랜드 등록`;
+            document.getElementById('brand-submit-btn').innerText = `브랜드 등록하기`;
+            document.getElementById('brand-cancel-btn').classList.add('hidden');
+        };
+
+        window.saveBrand = async () => {
+            const id = document.getElementById('editing-brand-id').value;
+            const name = document.getElementById('b-name').value.trim();
+            if(!name) { alert("브랜드명을 입력하세요."); return; }
+            
+            const brandData = {
+                name,
+                ci: document.getElementById('b-ci').value.trim(),
+                order: parseInt(document.getElementById('b-order').value) || 0
+            };
+
+            if(id) {
+                await updateDoc(doc(db, "brands", id), brandData);
+                alert("브랜드가 수정되었습니다.");
+            } else {
+                await addDoc(collection(db, "brands"), brandData);
+                alert("브랜드가 등록되었습니다.");
+            }
+            resetBrandForm();
             fetchData();
         };
 
-        window.saveMenu = async () => {
-            const name = document.getElementById('m-name').value.trim();
-            if(!name) { alert("메뉴명을 입력하세요."); return; }
-            const selectedBrands = Array.from(document.querySelectorAll('.m-checkbox:checked')).map(cb => cb.value);
+        // 메뉴 수정 데이터 불러오기
+        window.selectMenuForEdit = (id) => {
+            const m = menus.find(item => item.id === id);
+            if(!m) return;
+            document.getElementById('editing-menu-id').value = m.id;
+            document.getElementById('m-name').value = m.name;
+            document.getElementById('m-order').value = m.order;
+            document.getElementById('m-recipe').value = m.recipe || '';
             
-            await addDoc(collection(db, "menus"), {
-                name,
-                order: parseInt(document.getElementById('m-order').value) || 0,
-                brands: selectedBrands,
-                recipe: document.getElementById('m-recipe').value.trim()
+            // 체크박스 세팅
+            document.querySelectorAll('.m-checkbox').forEach(cb => {
+                cb.checked = m.brands && m.brands.includes(cb.value);
             });
+
+            document.getElementById('menu-form-title').innerHTML = `<i class="fa-solid fa-pen-to-square mr-1"></i> 메뉴 수정하기`;
+            document.getElementById('menu-submit-btn').innerText = `수정 완료`;
+            document.getElementById('menu-cancel-btn').classList.remove('hidden');
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        };
+
+        window.resetMenuForm = () => {
+            document.getElementById('editing-menu-id').value = '';
             document.getElementById('m-name').value = '';
             document.getElementById('m-order').value = '';
             document.getElementById('m-recipe').value = '';
             document.querySelectorAll('.m-checkbox').forEach(cb => cb.checked = false);
-            alert("메뉴가 등록되었습니다.");
+            document.getElementById('menu-form-title').innerHTML = `<i class="fa-solid fa-plus-circle mr-1"></i> 새 메뉴 등록`;
+            document.getElementById('menu-submit-btn').innerText = `메뉴 등록하기`;
+            document.getElementById('menu-cancel-btn').classList.add('hidden');
+        };
+
+        window.saveMenu = async () => {
+            const id = document.getElementById('editing-menu-id').value;
+            const name = document.getElementById('m-name').value.trim();
+            if(!name) { alert("메뉴명을 입력하세요."); return; }
+            const selectedBrands = Array.from(document.querySelectorAll('.m-checkbox:checked')).map(cb => cb.value);
+            
+            const menuData = {
+                name,
+                order: parseInt(document.getElementById('m-order').value) || 0,
+                brands: selectedBrands,
+                recipe: document.getElementById('m-recipe').value.trim()
+            };
+
+            if(id) {
+                await updateDoc(doc(db, "menus", id), menuData);
+                alert("메뉴가 수정되었습니다.");
+            } else {
+                await addDoc(collection(db, "menus"), menuData);
+                alert("메뉴가 등록되었습니다.");
+            }
+            resetMenuForm();
             fetchData();
         };
 
