@@ -7,54 +7,60 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="bg-gray-50 min-h-screen text-gray-800">
+<body class="bg-gray-100 min-h-screen">
 
-    <!-- 상단 헤더 -->
     <header class="bg-white shadow-sm sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
-            <h1 class="text-xl font-black text-blue-600"><i class="fa-solid fa-utensils mr-2"></i>Brand Archive</h1>
-            <div id="nav-auth-area" class="flex gap-2"></div>
+        <div class="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center">
+            <h1 class="font-black text-blue-600 text-lg"><i class="fa-solid fa-store mr-2"></i>Brand Archive</h1>
+            <div id="nav-auth-area"></div>
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-4 py-6">
+    <main class="max-w-5xl mx-auto px-4 py-6">
         <!-- 뷰 전환 탭 -->
-        <div id="view-tabs" class="hidden flex gap-4 mb-6 border-b pb-4 overflow-x-auto">
-            <button onclick="switchView('user')" class="font-bold text-gray-500 hover:text-blue-600">고객 화면</button>
-            <button onclick="switchView('admin-brand')" class="font-bold text-gray-500 hover:text-blue-600">브랜드 관리</button>
-            <button onclick="switchView('admin-menu')" class="font-bold text-gray-500 hover:text-blue-600">메뉴 관리</button>
+        <div id="view-tabs" class="hidden flex gap-2 mb-6 bg-white p-2 rounded-xl shadow-sm">
+            <button onclick="switchView('user')" class="flex-1 py-2 rounded-lg font-bold hover:bg-blue-50">고객 화면</button>
+            <button onclick="switchView('admin-brand')" class="flex-1 py-2 rounded-lg font-bold hover:bg-blue-50">브랜드 관리</button>
+            <button onclick="switchView('admin-menu')" class="flex-1 py-2 rounded-lg font-bold hover:bg-blue-50">메뉴 관리</button>
         </div>
 
         <!-- [화면 1] 고객 화면 -->
-        <div id="view-user" class="space-y-8">
-            <div id="brand-list-user" class="flex gap-4 overflow-x-auto pb-4"></div>
-            <div id="menu-grid-user" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+        <div id="view-user" class="space-y-6">
+            <div id="brand-list-user" class="flex gap-4 overflow-x-auto pb-2"></div>
+            <div id="menu-grid-user" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         </div>
 
         <!-- [화면 2] 브랜드 관리 -->
-        <div id="view-admin-brand" class="hidden max-w-xl mx-auto bg-white p-6 rounded-2xl shadow-sm border space-y-4">
-            <h2 class="text-lg font-bold border-b pb-2">브랜드(카테고리) 추가</h2>
-            <input type="text" id="b-name" placeholder="브랜드명" class="w-full border p-2 rounded">
-            <input type="text" id="b-ci" placeholder="CI 이미지 URL" class="w-full border p-2 rounded">
-            <input type="number" id="b-order" placeholder="노출 순서 (숫자)" class="w-full border p-2 rounded">
-            <button onclick="saveBrand()" class="w-full bg-blue-600 text-white py-2 rounded font-bold">브랜드 등록</button>
-            <div id="brand-list-admin" class="mt-4 pt-4 border-t"></div>
+        <div id="view-admin-brand" class="hidden space-y-6">
+            <div class="bg-white p-6 rounded-xl shadow-sm border">
+                <h2 class="font-bold mb-4">새 브랜드 등록</h2>
+                <div class="grid grid-cols-1 gap-3">
+                    <input type="text" id="b-name" placeholder="브랜드명" class="border p-2 rounded">
+                    <input type="text" id="b-ci" placeholder="CI 이미지 URL" class="border p-2 rounded">
+                    <input type="number" id="b-order" placeholder="노출 순서 (숫자)" class="border p-2 rounded">
+                    <button onclick="saveBrand()" class="bg-blue-600 text-white py-2 rounded font-bold">등록/수정</button>
+                </div>
+            </div>
+            <div id="admin-brand-list" class="space-y-2"></div>
         </div>
 
         <!-- [화면 3] 메뉴 관리 -->
-        <div id="view-admin-menu" class="hidden max-w-2xl mx-auto bg-white p-6 rounded-2xl shadow-sm border space-y-4">
-            <h2 class="text-lg font-bold border-b pb-2">메뉴 등록 (다중 브랜드 선택)</h2>
-            <input type="text" id="m-name" placeholder="메뉴명" class="w-full border p-2 rounded">
-            <input type="number" id="m-order" placeholder="노출 순서 (숫자)" class="w-full border p-2 rounded">
-            <div id="brand-checkboxes" class="flex flex-wrap gap-2 py-2 text-sm"></div>
-            <textarea id="m-recipe" placeholder="레시피 상세" class="w-full border p-2 rounded h-32"></textarea>
-            <button onclick="saveMenu()" class="w-full bg-green-600 text-white py-2 rounded font-bold">메뉴 등록</button>
+        <div id="view-admin-menu" class="hidden space-y-6">
+            <div class="bg-white p-6 rounded-xl shadow-sm border">
+                <h2 class="font-bold mb-4">메뉴 등록</h2>
+                <input type="text" id="m-name" placeholder="메뉴명" class="w-full border p-2 rounded mb-2">
+                <input type="number" id="m-order" placeholder="노출 순서 (숫자)" class="w-full border p-2 rounded mb-2">
+                <div id="brand-checkboxes" class="flex flex-wrap gap-2 py-2 text-sm"></div>
+                <textarea id="m-recipe" placeholder="레시피 상세" class="w-full border p-2 rounded h-24 mb-2"></textarea>
+                <button onclick="saveMenu()" class="w-full bg-green-600 text-white py-2 rounded font-bold">메뉴 등록</button>
+            </div>
+            <div id="admin-menu-list" class="space-y-2"></div>
         </div>
     </main>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, query, orderBy, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         const firebaseConfig = {
@@ -76,26 +82,38 @@
         async function fetchData() {
             const bSnap = await getDocs(query(collection(db, "brands"), orderBy("order", "asc")));
             brands = bSnap.docs.map(d => ({id: d.id, ...d.data()}));
-            
             const mSnap = await getDocs(query(collection(db, "menus"), orderBy("order", "asc")));
             menus = mSnap.docs.map(d => ({id: d.id, ...d.data()}));
             renderUI();
         }
 
         window.renderUI = function() {
-            // 사용자 화면 브랜드 리스트
+            // 사용자 화면
             document.getElementById('brand-list-user').innerHTML = brands.map(b => `
-                <button onclick="filterMenus('${b.id}')" class="text-center min-w-[80px]">
-                    <img src="${b.ci}" class="w-16 h-16 rounded-full border shadow-sm mx-auto mb-1 object-cover">
-                    <span class="text-xs font-bold">${b.name}</span>
+                <button onclick="filterMenus('${b.id}')" class="text-center min-w-[70px]">
+                    <img src="${b.ci}" class="w-14 h-14 rounded-full mx-auto object-cover border">
+                    <span class="text-[10px] font-bold">${b.name}</span>
                 </button>
             `).join('');
 
-            // 브랜드 체크박스 (메뉴 관리)
+            // 관리자 목록 (수정/삭제)
+            document.getElementById('admin-brand-list').innerHTML = brands.map(b => `
+                <div class="bg-white p-3 flex justify-between items-center rounded-lg shadow-sm border">
+                    <span>${b.order}. <b>${b.name}</b></span>
+                    <button onclick="deleteItem('brands', '${b.id}')" class="text-red-500"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            `).join('');
+
+            document.getElementById('admin-menu-list').innerHTML = menus.map(m => `
+                <div class="bg-white p-3 flex justify-between items-center rounded-lg shadow-sm border">
+                    <span>${m.order}. <b>${m.name}</b></span>
+                    <button onclick="deleteItem('menus', '${m.id}')" class="text-red-500"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            `).join('');
+
+            // 체크박스
             document.getElementById('brand-checkboxes').innerHTML = brands.map(b => `
-                <label class="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded">
-                    <input type="checkbox" value="${b.id}" class="m-checkbox"> ${b.name}
-                </label>
+                <label class="flex items-center gap-1 bg-gray-200 px-2 py-1 rounded"><input type="checkbox" value="${b.id}" class="m-checkbox"> ${b.name}</label>
             `).join('');
         };
 
@@ -103,8 +121,8 @@
             const filtered = menus.filter(m => m.brands.includes(brandId));
             document.getElementById('menu-grid-user').innerHTML = filtered.map(m => `
                 <div class="bg-white p-4 rounded-xl border shadow-sm">
-                    <h3 class="font-bold text-lg">${m.name}</h3>
-                    <p class="text-sm text-gray-600 whitespace-pre-line mt-2">${m.recipe}</p>
+                    <h3 class="font-bold text-lg text-blue-800">${m.name}</h3>
+                    <p class="text-sm text-gray-600 mt-1 whitespace-pre-line">${m.recipe}</p>
                 </div>
             `).join('');
         };
@@ -129,11 +147,14 @@
             fetchData();
         };
 
+        window.deleteItem = async (col, id) => {
+            if(confirm("삭제하시겠습니까?")) { await deleteDoc(doc(db, col, id)); fetchData(); }
+        };
+
         window.switchView = (mode) => {
-            document.getElementById('view-user').classList.add('hidden', 'hidden', 'hidden'); // 초기화
-            document.getElementById('view-user').classList.toggle('hidden', mode !== 'user');
-            document.getElementById('view-admin-brand').classList.toggle('hidden', mode !== 'admin-brand');
-            document.getElementById('view-admin-menu').classList.toggle('hidden', mode !== 'admin-menu');
+            ['user', 'admin-brand', 'admin-menu'].forEach(v => {
+                document.getElementById('view-' + v).classList.toggle('hidden', v !== mode);
+            });
         };
 
         onAuthStateChanged(auth, (user) => {
