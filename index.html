@@ -46,7 +46,6 @@
         import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
         import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
 
-        // 보내주신 최신 설정값 적용 완료 (analytics 제외하여 에러 방지)
         const firebaseConfig = {
             apiKey: "AIzaSyBqXBVuNWLNWD0fLbLQLSaimanJgXbKm8",
             authDomain: "food-8561a.firebaseapp.com",
@@ -88,7 +87,6 @@
         onAuthStateChanged(auth, (user) => {
             const adminPanel = document.getElementById('admin-panel');
             const logoutBtn = document.getElementById('logout-btn');
-            const loginSection = document.getElementById('login-section');
 
             if (user && user.email === 'munjd1234@gmail.com') {
                 adminPanel.style.display = 'block';
