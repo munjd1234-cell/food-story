@@ -3,42 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Food Story - 브랜드 통합 관리 시스템</title>
+    <title>Food Story - Brand Archive</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-gray-100 min-h-screen">
 
+    <!-- 상단 헤더 -->
     <header class="bg-white shadow-sm sticky top-0 z-50">
         <div class="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center">
-            <h1 class="font-black text-blue-600 text-lg"><i class="fa-solid fa-store mr-2"></i>Brand Archive</h1>
-            <div id="nav-auth-area"></div>
+            <h1 class="font-black text-blue-600 text-lg cursor-pointer" onclick="switchView('user')">
+                <i class="fa-solid fa-store mr-2"></i>Brand Archive
+            </h1>
+            <div id="nav-auth-area" class="flex items-center gap-3 text-sm">
+                <!-- 로그인 상태에 따라 버튼 변경 -->
+            </div>
         </div>
     </header>
 
     <main class="max-w-5xl mx-auto px-4 py-6">
-        <!-- 뷰 전환 탭 -->
-        <div id="view-tabs" class="hidden flex gap-2 mb-6 bg-white p-2 rounded-xl shadow-sm">
-            <button onclick="switchView('user')" class="flex-1 py-2 rounded-lg font-bold hover:bg-blue-50">고객 화면</button>
-            <button onclick="switchView('admin-brand')" class="flex-1 py-2 rounded-lg font-bold hover:bg-blue-50">브랜드 관리</button>
-            <button onclick="switchView('admin-menu')" class="flex-1 py-2 rounded-lg font-bold hover:bg-blue-50">메뉴 관리</button>
+        <!-- 관리자 전용 탭 (로그인 시에만 노출) -->
+        <div id="view-tabs" class="hidden flex gap-2 mb-6 bg-white p-2 rounded-xl shadow-sm border">
+            <button onclick="switchView('user')" class="flex-1 py-2 rounded-lg font-bold hover:bg-blue-50 text-gray-700">고객 화면</button>
+            <button onclick="switchView('admin-brand')" class="flex-1 py-2 rounded-lg font-bold hover:bg-blue-50 text-gray-700">브랜드 관리</button>
+            <button onclick="switchView('admin-menu')" class="flex-1 py-2 rounded-lg font-bold hover:bg-blue-50 text-gray-700">메뉴 관리</button>
         </div>
 
         <!-- [화면 1] 고객 화면 -->
         <div id="view-user" class="space-y-6">
-            <div id="brand-list-user" class="flex gap-4 overflow-x-auto pb-2"></div>
-            <div id="menu-grid-user" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            <div class="bg-white p-4 rounded-xl shadow-sm border">
+                <h2 class="text-xs font-bold text-gray-400 mb-3">브랜드 선택</h2>
+                <div id="brand-list-user" class="flex gap-4 overflow-x-auto pb-2"></div>
+            </div>
+            <div id="menu-grid-user" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="col-span-full text-center py-10 text-gray-400 bg-white rounded-xl border">상단에서 브랜드를 선택해 주세요.</div>
+            </div>
         </div>
 
         <!-- [화면 2] 브랜드 관리 -->
         <div id="view-admin-brand" class="hidden space-y-6">
             <div class="bg-white p-6 rounded-xl shadow-sm border">
-                <h2 class="font-bold mb-4">새 브랜드 등록</h2>
+                <h2 class="font-bold mb-4 text-blue-600"><i class="fa-solid fa-plus-circle mr-1"></i> 새 브랜드 등록</h2>
                 <div class="grid grid-cols-1 gap-3">
-                    <input type="text" id="b-name" placeholder="브랜드명" class="border p-2 rounded">
-                    <input type="text" id="b-ci" placeholder="CI 이미지 URL" class="border p-2 rounded">
-                    <input type="number" id="b-order" placeholder="노출 순서 (숫자)" class="border p-2 rounded">
-                    <button onclick="saveBrand()" class="bg-blue-600 text-white py-2 rounded font-bold">등록/수정</button>
+                    <input type="text" id="b-name" placeholder="브랜드명" class="border p-2.5 rounded-lg text-sm">
+                    <input type="text" id="b-ci" placeholder="CI 이미지 URL" class="border p-2.5 rounded-lg text-sm">
+                    <input type="number" id="b-order" placeholder="노출 순서 (숫자)" class="border p-2.5 rounded-lg text-sm">
+                    <button onclick="saveBrand()" class="bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg font-bold text-sm">브랜드 등록하기</button>
                 </div>
             </div>
             <div id="admin-brand-list" class="space-y-2"></div>
@@ -47,21 +57,39 @@
         <!-- [화면 3] 메뉴 관리 -->
         <div id="view-admin-menu" class="hidden space-y-6">
             <div class="bg-white p-6 rounded-xl shadow-sm border">
-                <h2 class="font-bold mb-4">메뉴 등록</h2>
-                <input type="text" id="m-name" placeholder="메뉴명" class="w-full border p-2 rounded mb-2">
-                <input type="number" id="m-order" placeholder="노출 순서 (숫자)" class="w-full border p-2 rounded mb-2">
-                <div id="brand-checkboxes" class="flex flex-wrap gap-2 py-2 text-sm"></div>
-                <textarea id="m-recipe" placeholder="레시피 상세" class="w-full border p-2 rounded h-24 mb-2"></textarea>
-                <button onclick="saveMenu()" class="w-full bg-green-600 text-white py-2 rounded font-bold">메뉴 등록</button>
+                <h2 class="font-bold mb-4 text-green-600"><i class="fa-solid fa-plus-circle mr-1"></i> 새 메뉴 등록</h2>
+                <input type="text" id="m-name" placeholder="메뉴명" class="w-full border p-2.5 rounded-lg text-sm mb-3">
+                <input type="number" id="m-order" placeholder="노출 순서 (숫자)" class="w-full border p-2.5 rounded-lg text-sm mb-3">
+                <div class="mb-3">
+                    <label class="block text-xs font-bold text-gray-500 mb-1">소속 브랜드 선택 (다중 선택 가능)</label>
+                    <div id="brand-checkboxes" class="flex flex-wrap gap-2 py-1 text-sm"></div>
+                </div>
+                <textarea id="m-recipe" placeholder="레시피 상세 내용" class="w-full border p-2.5 rounded-lg text-sm h-28 mb-3"></textarea>
+                <button onclick="saveMenu()" class="w-full bg-green-600 hover:bg-green-700 text-white py-2.5 rounded-lg font-bold text-sm">메뉴 등록하기</button>
             </div>
             <div id="admin-menu-list" class="space-y-2"></div>
         </div>
     </main>
 
+    <!-- 관리자 로그인 모달 -->
+    <div id="login-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm space-y-4 shadow-xl">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-gray-900">관리자 로그인</h3>
+                <button onclick="toggleLoginModal(false)" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div>
+                <input type="email" id="login-email" placeholder="이메일 입력" class="w-full border rounded-xl p-3 text-sm mb-3 bg-gray-50">
+                <input type="password" id="login-password" placeholder="비밀번호 입력" class="w-full border rounded-xl p-3 text-sm bg-gray-50">
+            </div>
+            <button onclick="processLogin()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl text-sm">로그인</button>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, query, orderBy, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCM2jurmr57b5_iXV8FqzovSSnXwHeuHiQ",
@@ -80,75 +108,106 @@
         let menus = [];
 
         async function fetchData() {
-            const bSnap = await getDocs(query(collection(db, "brands"), orderBy("order", "asc")));
-            brands = bSnap.docs.map(d => ({id: d.id, ...d.data()}));
-            const mSnap = await getDocs(query(collection(db, "menus"), orderBy("order", "asc")));
-            menus = mSnap.docs.map(d => ({id: d.id, ...d.data()}));
-            renderUI();
+            try {
+                const bSnap = await getDocs(query(collection(db, "brands"), orderBy("order", "asc")));
+                brands = bSnap.docs.map(d => ({id: d.id, ...d.data()}));
+                const mSnap = await getDocs(query(collection(db, "menus"), orderBy("order", "asc")));
+                menus = mSnap.docs.map(d => ({id: d.id, ...d.data()}));
+                renderUI();
+            } catch (e) {
+                console.error(e);
+            }
         }
 
         window.renderUI = function() {
-            // 사용자 화면
-            document.getElementById('brand-list-user').innerHTML = brands.map(b => `
-                <button onclick="filterMenus('${b.id}')" class="text-center min-w-[70px]">
-                    <img src="${b.ci}" class="w-14 h-14 rounded-full mx-auto object-cover border">
-                    <span class="text-[10px] font-bold">${b.name}</span>
+            // 고객 화면 브랜드 리스트
+            document.getElementById('brand-list-user').innerHTML = brands.length > 0 ? brands.map(b => `
+                <button onclick="filterMenus('${b.id}')" class="text-center min-w-[70px] hover:opacity-80 transition">
+                    <img src="${b.ci || 'https://via.placeholder.com/60'}" class="w-14 h-14 rounded-full mx-auto object-cover border shadow-sm">
+                    <span class="text-xs font-bold mt-1 block truncate w-16">${b.name}</span>
                 </button>
-            `).join('');
+            `).join('') : '<p class="text-xs text-gray-400">등록된 브랜드가 없습니다.</p>';
 
-            // 관리자 목록 (수정/삭제)
+            // 관리자 브랜드 관리 목록
             document.getElementById('admin-brand-list').innerHTML = brands.map(b => `
-                <div class="bg-white p-3 flex justify-between items-center rounded-lg shadow-sm border">
-                    <span>${b.order}. <b>${b.name}</b></span>
-                    <button onclick="deleteItem('brands', '${b.id}')" class="text-red-500"><i class="fa-solid fa-trash"></i></button>
+                <div class="bg-white p-3 flex justify-between items-center rounded-lg shadow-sm border text-sm">
+                    <span><b>[순서 ${b.order}]</b> ${b.name}</span>
+                    <button onclick="deleteItem('brands', '${b.id}')" class="text-red-500 hover:text-red-700 px-2 py-1"><i class="fa-solid fa-trash"></i> 삭제</button>
                 </div>
             `).join('');
 
+            // 관리자 메뉴 관리 목록
             document.getElementById('admin-menu-list').innerHTML = menus.map(m => `
-                <div class="bg-white p-3 flex justify-between items-center rounded-lg shadow-sm border">
-                    <span>${m.order}. <b>${m.name}</b></span>
-                    <button onclick="deleteItem('menus', '${m.id}')" class="text-red-500"><i class="fa-solid fa-trash"></i></button>
+                <div class="bg-white p-3 flex justify-between items-center rounded-lg shadow-sm border text-sm">
+                    <span><b>[순서 ${m.order}]</b> ${m.name}</span>
+                    <button onclick="deleteItem('menus', '${m.id}')" class="text-red-500 hover:text-red-700 px-2 py-1"><i class="fa-solid fa-trash"></i> 삭제</button>
                 </div>
             `).join('');
 
-            // 체크박스
+            // 메뉴 등록용 브랜드 체크박스
             document.getElementById('brand-checkboxes').innerHTML = brands.map(b => `
-                <label class="flex items-center gap-1 bg-gray-200 px-2 py-1 rounded"><input type="checkbox" value="${b.id}" class="m-checkbox"> ${b.name}</label>
+                <label class="flex items-center gap-1.5 bg-gray-50 border px-3 py-1.5 rounded-lg cursor-pointer">
+                    <input type="checkbox" value="${b.id}" class="m-checkbox"> ${b.name}
+                </label>
             `).join('');
         };
 
         window.filterMenus = (brandId) => {
-            const filtered = menus.filter(m => m.brands.includes(brandId));
-            document.getElementById('menu-grid-user').innerHTML = filtered.map(m => `
-                <div class="bg-white p-4 rounded-xl border shadow-sm">
-                    <h3 class="font-bold text-lg text-blue-800">${m.name}</h3>
-                    <p class="text-sm text-gray-600 mt-1 whitespace-pre-line">${m.recipe}</p>
+            const filtered = menus.filter(m => m.brands && m.brands.includes(brandId));
+            const grid = document.getElementById('menu-grid-user');
+            
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-center py-10 text-gray-400 bg-white rounded-xl border">이 브랜드에 등록된 메뉴가 없습니다.</div>`;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(m => `
+                <div class="bg-white p-5 rounded-xl border shadow-sm space-y-2">
+                    <h3 class="font-bold text-lg text-blue-900">${m.name}</h3>
+                    <p class="text-sm text-gray-600 mt-2 whitespace-pre-line leading-relaxed bg-gray-50 p-3 rounded-lg border">${m.recipe || '레시피가 없습니다.'}</p>
                 </div>
             `).join('');
         };
 
         window.saveBrand = async () => {
+            const name = document.getElementById('b-name').value.trim();
+            if(!name) { alert("브랜드명을 입력하세요."); return; }
             await addDoc(collection(db, "brands"), {
-                name: document.getElementById('b-name').value,
-                ci: document.getElementById('b-ci').value,
+                name,
+                ci: document.getElementById('b-ci').value.trim(),
                 order: parseInt(document.getElementById('b-order').value) || 0
             });
+            document.getElementById('b-name').value = '';
+            document.getElementById('b-ci').value = '';
+            document.getElementById('b-order').value = '';
+            alert("브랜드가 등록되었습니다.");
             fetchData();
         };
 
         window.saveMenu = async () => {
+            const name = document.getElementById('m-name').value.trim();
+            if(!name) { alert("메뉴명을 입력하세요."); return; }
             const selectedBrands = Array.from(document.querySelectorAll('.m-checkbox:checked')).map(cb => cb.value);
+            
             await addDoc(collection(db, "menus"), {
-                name: document.getElementById('m-name').value,
+                name,
                 order: parseInt(document.getElementById('m-order').value) || 0,
                 brands: selectedBrands,
-                recipe: document.getElementById('m-recipe').value
+                recipe: document.getElementById('m-recipe').value.trim()
             });
+            document.getElementById('m-name').value = '';
+            document.getElementById('m-order').value = '';
+            document.getElementById('m-recipe').value = '';
+            document.querySelectorAll('.m-checkbox').forEach(cb => cb.checked = false);
+            alert("메뉴가 등록되었습니다.");
             fetchData();
         };
 
         window.deleteItem = async (col, id) => {
-            if(confirm("삭제하시겠습니까?")) { await deleteDoc(doc(db, col, id)); fetchData(); }
+            if(confirm("정말 삭제하시겠습니까?")) {
+                await deleteDoc(doc(db, col, id));
+                fetchData();
+            }
         };
 
         window.switchView = (mode) => {
@@ -157,8 +216,48 @@
             });
         };
 
+        window.toggleLoginModal = (show) => {
+            document.getElementById('login-modal').classList.toggle('hidden', !show);
+        }
+
+        window.processLogin = async () => {
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value.trim();
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                toggleLoginModal(false);
+                alert("로그인 성공!");
+            } catch (e) {
+                alert("로그인 실패: " + e.message);
+            }
+        }
+
+        window.processLogout = async () => {
+            await signOut(auth);
+            switchView('user');
+            alert("로그아웃 되었습니다.");
+        }
+
         onAuthStateChanged(auth, (user) => {
-            document.getElementById('view-tabs').classList.toggle('hidden', !user);
+            const navAuth = document.getElementById('nav-auth-area');
+            const viewTabs = document.getElementById('view-tabs');
+
+            if (user) {
+                navAuth.innerHTML = `
+                    <span class="text-xs text-gray-500 font-medium hidden md:inline">👤 ${user.email}</span>
+                    <button onclick="switchView('admin-brand')" class="bg-blue-600 text-white px-3 py-1.5 rounded-lg font-bold text-xs">관리자 모드</button>
+                    <button onclick="processLogout()" class="text-gray-400 hover:text-red-500 text-xs font-bold">로그아웃</button>
+                `;
+                viewTabs.classList.remove('hidden');
+            } else {
+                navAuth.innerHTML = `
+                    <button onclick="toggleLoginModal(true)" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg font-bold text-xs transition">
+                        <i class="fa-solid fa-lock mr-1"></i> 관리자 로그인
+                    </button>
+                `;
+                viewTabs.classList.add('hidden');
+                switchView('user');
+            }
             fetchData();
         });
     </script>
