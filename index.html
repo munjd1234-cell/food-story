@@ -3,37 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Food Story - Admin</title>
-    <!-- Tailwind CSS CDN -->
+    <title>Food Story - 메뉴 아카이브</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col justify-center items-center">
+<body class="bg-gray-100 min-h-screen flex flex-col items-center py-10 px-4">
 
-    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-        <h1 class="text-2xl font-bold mb-6 text-center text-gray-800">Food Story 관리자 로그인</h1>
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-xl">
+        <h1 class="text-2xl font-bold mb-6 text-center text-gray-800">Food Story 메뉴 아카이브</h1>
         
-        <div id="login-form">
-            <div class="mb-4">
+        <!-- 로그인 전 폼 -->
+        <div id="login-form" class="space-y-4">
+            <div>
                 <label class="block text-gray-700 text-sm font-bold mb-2" for="email">이메일</label>
                 <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="email" type="email" placeholder="이메일 입력">
             </div>
-            <div class="mb-6">
+            <div>
                 <label class="block text-gray-700 text-sm font-bold mb-2" for="password">비밀번호</label>
                 <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline" id="password" type="password" placeholder="비밀번호 입력">
             </div>
-            <div class="flex items-center justify-between">
-                <button id="login-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full" type="button">
-                    로그인
-                </button>
-            </div>
+            <button id="login-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full" type="button">
+                로그인
+            </button>
         </div>
 
-        <div id="dashboard" class="hidden">
-            <p class="text-green-600 font-bold mb-4 text-center">로그인 되었습니다!</p>
-            <p id="user-email" class="text-gray-600 mb-4 text-center"></p>
-            <button id="logout-btn" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full" type="button">
-                로그아웃
-            </button>
+        <!-- 로그인 후 대시보드 (메뉴 등록 및 목록) -->
+        <div id="dashboard" class="hidden space-y-6">
+            <div class="flex justify-between items-center bg-gray-50 p-4 rounded-md border">
+                <span id="user-email" class="text-gray-700 text-sm font-medium"></span>
+                <button id="logout-btn" class="bg-red-500 hover:bg-red-600 text-white text-sm font-bold py-1.5 px-3 rounded focus:outline-none" type="button">
+                    로그아웃
+                </button>
+            </div>
+
+            <!-- 메뉴 등록 영역 -->
+            <div class="bg-blue-50 p-4 rounded-md border border-blue-100 space-y-3">
+                <h2 class="text-md font-bold text-blue-800">새 메뉴 등록</h2>
+                <div class="flex gap-2">
+                    <input type="text" id="menu-name" placeholder="메뉴 이름을 입력하세요" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                    <button id="add-menu-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded whitespace-nowrap">등록</button>
+                </div>
+            </div>
+
+            <!-- 메뉴 목록 영역 -->
+            <div>
+                <h2 class="text-md font-bold text-gray-700 mb-2">등록된 메뉴 목록</h2>
+                <div id="menu-list" class="space-y-2">
+                    <p class="text-gray-500 text-sm text-center py-4">메뉴를 불러오는 중...</p>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -41,8 +58,8 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // 파이어베이스 프로젝트 설정값 (새로 발급받은 값 적용 완료)
         const firebaseConfig = {
             apiKey: "AIzaSyCM2jurmr57b5_iXV8FqzovSSnXwHeuHiQ",
             authDomain: "food-story-59a02.firebaseapp.com",
@@ -53,51 +70,98 @@
             measurementId: "G-QB10D1CSSC"
         };
 
-        // Firebase 초기화
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
+        const db = getFirestore(app);
 
         const loginForm = document.getElementById('login-form');
         const dashboard = document.getElementById('dashboard');
         const loginBtn = document.getElementById('login-btn');
         const logoutBtn = document.getElementById('logout-btn');
         const userEmailText = document.getElementById('user-email');
+        const addMenuBtn = document.getElementById('add-menu-btn');
+        const menuListDiv = document.getElementById('menu-list');
 
-        // 로그인 버튼 클릭 이벤트
+        // 로그인
         loginBtn.addEventListener('click', () => {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
             signInWithEmailAndPassword(auth, email, password)
-                .then((userCredential) => {
-                    // 로그인 성공
-                    console.log("로그인 성공:", userCredential.user);
-                })
-                .catch((error) => {
-                    alert("로그인 실패: " + error.message);
-                });
+                .catch((error) => alert("로그인 실패: " + error.message));
         });
 
-        // 로그아웃 버튼 클릭 이벤트
+        // 로그아웃
         logoutBtn.addEventListener('click', () => {
-            signOut(auth).then(() => {
-                console.log("로그아웃 성공");
-            }).catch((error) => {
-                console.error("로그아웃 오류", error);
-            });
+            signOut(auth);
         });
 
-        // 인증 상태 모니터링 (로그인 여부에 따라 화면 전환)
+        // 인증 상태 감지 및 화면 전환
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 loginForm.classList.add('hidden');
                 dashboard.classList.remove('hidden');
-                userEmailText.innerText = `접속 계정: ${user.email}`;
+                userEmailText.innerText = `${user.email} (관리자)`;
+                loadMenus();
             } else {
                 loginForm.classList.remove('hidden');
                 dashboard.classList.add('hidden');
             }
         });
+
+        // 메뉴 등록
+        addMenuBtn.addEventListener('click', async () => {
+            const menuName = document.getElementById('menu-name').value.trim();
+            if (!menuName) {
+                alert("메뉴 이름을 입력해주세요!");
+                return;
+            }
+            try {
+                await addDoc(collection(db, "menus"), {
+                    name: menuName,
+                    createdAt: new Date()
+                });
+                document.getElementById('menu-name').value = "";
+                loadMenus();
+            } catch (e) {
+                alert("메뉴 등록 중 오류 발생: " + e.message);
+            }
+        });
+
+        // 메뉴 목록 불러오기
+        async function loadMenus() {
+            try {
+                const querySnapshot = await getDocs(collection(db, "menus"));
+                menuListDiv.innerHTML = "";
+                if (querySnapshot.empty) {
+                    menuListDiv.innerHTML = `<p class="text-gray-400 text-sm text-center py-3">등록된 메뉴가 없습니다.</p>`;
+                    return;
+                }
+                querySnapshot.forEach((documentItem) => {
+                    const data = documentItem.data();
+                    const itemCard = document.createElement('div');
+                    itemCard.className = "flex justify-between items-center bg-white p-3 rounded border shadow-sm";
+                    itemCard.innerHTML = `
+                        <span class="text-gray-800 font-medium">${data.name}</span>
+                        <button onclick="deleteMenu('${documentItem.id}')" class="bg-red-100 hover:bg-red-200 text-red-600 text-xs font-bold py-1 px-2.5 rounded">삭제</button>
+                    `;
+                    menuListDiv.appendChild(itemCard);
+                });
+            } catch (e) {
+                menuListDiv.innerHTML = `<p class="text-red-500 text-sm text-center">메뉴를 불러오지 못했습니다.</p>`;
+            }
+        }
+
+        // 메뉴 삭제 함수 전역 등록
+        window.deleteMenu = async function(id) {
+            if (confirm("정말 이 메뉴를 삭제하시겠습니까?")) {
+                try {
+                    await deleteDoc(doc(db, "menus", id));
+                    loadMenus();
+                } catch (e) {
+                    alert("삭제 실패: " + e.message);
+                }
+            }
+        }
     </script>
 </body>
 </html>
